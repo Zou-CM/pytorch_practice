@@ -21,7 +21,7 @@ def getLabel():
     names = []
     with open(file_path, 'r') as f:
         for line in f:
-            print(line)
+            # print(line)
             names = line.strip().split(',')[1:]
             break
     labels = {}

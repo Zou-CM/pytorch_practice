@@ -16,10 +16,15 @@ def train(flag=True):
 
     if flag:
         net = models.resnet101(pretrained=True)
-        net.fc = nn.Linear(512, cfg.num_class)
+        # net.fc = nn.Linear(2048, cfg.num_class)
+        # net.aux_logits=False
+        net.fc = nn.Sequential(
+            nn.Linear(2048, 512),
+            nn.Linear(512, cfg.num_class)
+        )
     else:
         net = models.resnet101(pretrained=False)
-        net.fc = nn.Linear(512, cfg.num_class)
+        net.fc = nn.Linear(2048, cfg.num_class)
         net.load_state_dict(torch.load(cfg.checkpoints_path))
 
     net.cuda()
@@ -30,7 +35,13 @@ def train(flag=True):
     trainLoader = DataLoader(trainSet, batch_size=cfg.batch_size, shuffle=True, drop_last=True)
     devLoader = DataLoader(devSet, batch_size=1, shuffle=True, drop_last=True)
 
-    opt = optim.Adam(net.parameters(), lr=cfg.lr)
+    for name, value in net.named_parameters():
+        if 'fc' not in name:
+            value.requires_grad = False
+
+    params = filter(lambda p: p.requires_grad, net.parameters())
+
+    opt = optim.Adam(params, lr=cfg.lr)
 
     ntr = len(trainLoader)
 
@@ -65,12 +76,15 @@ def train(flag=True):
             num += 1.0
         print('\nEpoch %d acc = %.5f'%(e, acc / num))
         torch.save(net.state_dict(), cfg.checkpoints_path)
-        for p in opt.param_groups:
-            p['lr'] *= 0.8
+        if e != 0 and e % 5 == 0:
+            for p in opt.param_groups:
+                p['lr'] *= 0.5
 
 
 def test():
     pass
 
 if __name__ == '__main__':
+    # net = models.inception_v3(False)
+    # print(net)
     train(True)
