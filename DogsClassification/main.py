@@ -8,23 +8,30 @@ import torch.nn as nn
 from dataset.MyDataset import MyDataset
 from torchvision import models
 import utils
+import os
 from config import Config
 
 
 def train(flag=True):
     cfg = Config()
 
+    if not os.path.exists('./checkpoints'):
+        os.mkdir('./checkpoints')
+
     if flag:
         net = models.resnet101(pretrained=True)
         # net.fc = nn.Linear(2048, cfg.num_class)
-        # net.aux_logits=False
         net.fc = nn.Sequential(
             nn.Linear(2048, 512),
             nn.Linear(512, cfg.num_class)
         )
     else:
         net = models.resnet101(pretrained=False)
-        net.fc = nn.Linear(2048, cfg.num_class)
+        # net.fc = nn.Linear(2048, cfg.num_class)
+        net.fc = nn.Sequential(
+            nn.Linear(2048, 512),
+            nn.Linear(512, cfg.num_class)
+        )
         net.load_state_dict(torch.load(cfg.checkpoints_path))
 
     net.cuda()
@@ -76,9 +83,9 @@ def train(flag=True):
             num += 1.0
         print('\nEpoch %d acc = %.5f'%(e, acc / num))
         torch.save(net.state_dict(), cfg.checkpoints_path)
-        if e != 0 and e % 5 == 0:
-            for p in opt.param_groups:
-                p['lr'] *= 0.5
+        # if e != 0 and e % 5 == 0:
+        #     for p in opt.param_groups:
+        #         p['lr'] *= 0.5
 
 
 def test():
@@ -87,4 +94,4 @@ def test():
 if __name__ == '__main__':
     # net = models.inception_v3(False)
     # print(net)
-    train(True)
+    train(True) #True表示用预训练模型，Flase表示用自己训练的结果

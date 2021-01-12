@@ -64,7 +64,7 @@ def bar(t, s, e, ls):
 
 
 if __name__ == '__main__':
-    pass
-    # getDev()
+    # pass
+    getDev()
+    renamePic()
     # print(getLabel())
-    # renamePic()
